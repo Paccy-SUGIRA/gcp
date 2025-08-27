@@ -1,0 +1,156 @@
+{% extends 'gwizacash/base.html' %}
+{% load humanize %}
+
+{% block title %}Loan Payment - GwizaCash{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <h2>Make Loan Payment</h2>
+        </div>
+        <div class="col-md-4">
+            <a href="{% url 'gwizacash:my_loans' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to My Loans
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <!-- Loan Details -->
+        <div class="col-md-6">
+            <div class="card mb-4 {% if loan.is_overdue %}border-warning{% endif %}">
+                <div class="card-header">
+                    <h5 class="mb-0">Loan Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted">Original Amount</small>
+                            <p><strong>{{ loan.amount|floatformat:0|intcomma }} RWF</strong></p>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Interest</small>
+                            <p><strong>{{ loan.interest_amount|floatformat:0|intcomma }} RWF</strong></p>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Total Amount</small>
+                            <p><strong>{{ loan.total_amount|floatformat:0|intcomma }} RWF</strong></p>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Remaining Balance</small>
+                            <p><strong class="text-primary">{{ loan.remaining_balance|floatformat:0|intcomma }} RWF</strong></p>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Due Date</small>
+                            <p><strong>{{ loan.due_date|date:"M d, Y" }}</strong></p>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Status</small>
+                            <p><span class="badge bg-info">{{ loan.status }}</span></p>
+                        </div>
+                    </div>
+                    
+                    {% if loan.is_overdue %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i> 
+                        <strong>{{ loan.days_overdue }} days overdue!</strong><br>
+                        Current penalty: <strong>{{ loan.calculate_penalty|floatformat:0|intcomma }} RWF</strong>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Form -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Make Payment</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="amount" class="form-label">Payment Amount (RWF)</label>
+                            <input type="number" class="form-control" id="amount" name="amount" 
+                                   min="1" max="{{ loan.remaining_balance }}" step="0.01" required>
+                            <div class="form-text">Maximum: {{ loan.remaining_balance|floatformat:0|intcomma }} RWF</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="bank_slip" class="form-label">Bank Slip/Receipt</label>
+                            <input type="file" class="form-control" id="bank_slip" name="bank_slip" 
+                                   accept=".jpg,.jpeg,.png,.pdf" required>
+                            <div class="form-text">Upload proof of payment (JPG, PNG, or PDF)</div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-credit-card"></i> Submit Payment
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment History -->
+    {% if payment_history %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Payment History</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Bank Slip</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in payment_history %}
+                                <tr>
+                                    <td>{{ payment.payment_date|date:"M d, Y H:i" }}</td>
+                                    <td>{{ payment.amount|floatformat:0|intcomma }} RWF</td>
+                                    <td>
+                                        <span class="badge 
+                                        {% if payment.status == 'PENDING' %}bg-warning
+                                        {% elif payment.status == 'APPROVED' %}bg-success
+                                        {% elif payment.status == 'REJECTED' %}bg-danger
+                                        {% endif %}">
+                                        {{ payment.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if payment.bank_slip %}
+                                        <a href="{{ payment.bank_slip.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-file-earmark"></i> View
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">No slip</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,247 @@
+{% extends 'gwizacash/base.html' %}
+{% load static humanize %}
+
+{% block title %}My Loans - GwizaCash{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">My Loans</h3>
+                    
+                    <!-- Loan Request Button with Logic -->
+                    {% if pending_loans or approved_loans or active_loans %}
+                        <div class="dropdown">
+                            <button class="btn btn-secondary dropdown-toggle" type="button" disabled>
+                                <i class="bi bi-ban"></i> Cannot Request Loan
+                            </button>
+                            <div class="dropdown-menu">
+                                <div class="dropdown-item-text">
+                                    <small class="text-muted">
+                                        {% if pending_loans %}
+                                            You have a pending loan request
+                                        {% elif approved_loans %}
+                                            You have an approved loan awaiting disbursement
+                                        {% elif active_loans %}
+                                            You have an active loan to complete
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'gwizacash:request_loan' %}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Request New Loan
+                        </a>
+                    {% endif %}
+                </div>
+                
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- Loan Summary -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h5>Total Borrowed</h5>
+                                    <h3>{{ total_borrowed|floatformat:0|intcomma }} RWF</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <h5>Remaining Balance</h5>
+                                    <h3>{{ total_remaining|floatformat:0|intcomma }} RWF</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loans Tabs -->
+                    <ul class="nav nav-tabs" id="loanTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="active-tab" data-bs-toggle="tab" data-bs-target="#active" type="button" role="tab">
+                                Active Loans <span class="badge bg-success">{{ active_loans.count }}</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab">
+                                Pending <span class="badge bg-warning">{{ pending_loans.count }}</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved" type="button" role="tab">
+                                Approved <span class="badge bg-info">{{ approved_loans.count }}</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab">
+                                Completed <span class="badge bg-secondary">{{ completed_loans.count }}</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="payments-tab" data-bs-toggle="tab" data-bs-target="#payments" type="button" role="tab">
+                                Payment History
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="loanTabsContent">
+                        <!-- Active Loans Tab -->
+                        <div class="tab-pane fade show active" id="active" role="tabpanel">
+                            {% if active_loans %}
+                                {% for loan in active_loans %}
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-8">
+                                                <h5>Loan #{{ loan.id }}</h5>
+                                                <p><strong>Amount:</strong> {{ loan.amount|floatformat:0|intcomma }} RWF</p>
+                                                <p><strong>Total Amount:</strong> {{ loan.total_amount|floatformat:0|intcomma }} RWF</p>
+                                                <p><strong>Remaining:</strong> {{ loan.remaining_balance|floatformat:0|intcomma }} RWF</p>
+                                                <p><strong>Due Date:</strong> {{ loan.due_date|date:"M d, Y" }}</p>
+                                                {% if loan.is_overdue %}
+                                                    <span class="badge bg-danger">Overdue</span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-4 text-end">
+                                                <a href="{% url 'gwizacash:pay_loan' loan.id %}" class="btn btn-primary">
+                                                    <i class="bi bi-credit-card"></i> Make Payment
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="alert alert-info mt-3">
+                                    <i class="bi bi-info-circle"></i> No active loans.
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Pending Loans Tab -->
+                        <div class="tab-pane fade" id="pending" role="tabpanel">
+                            {% if pending_loans %}
+                                {% for loan in pending_loans %}
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <h5>Loan #{{ loan.id }}</h5>
+                                        <p><strong>Amount:</strong> {{ loan.amount|floatformat:0|intcomma }} RWF</p>
+                                        <p><strong>Duration:</strong> {{ loan.duration }} months</p>
+                                        <p><strong>Request Date:</strong> {{ loan.request_date|date:"M d, Y" }}</p>
+                                        <span class="badge bg-warning">Pending Approval</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="alert alert-info mt-3">
+                                    <i class="bi bi-info-circle"></i> No pending loan requests.
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Approved Loans Tab -->
+                        <div class="tab-pane fade" id="approved" role="tabpanel">
+                            {% if approved_loans %}
+                                {% for loan in approved_loans %}
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <h5>Loan #{{ loan.id }}</h5>
+                                        <p><strong>Amount:</strong> {{ loan.amount|floatformat:0|intcomma }} RWF</p>
+                                        <p><strong>Duration:</strong> {{ loan.duration }} months</p>
+                                        <p><strong>Approved Date:</strong> {{ loan.approval_date|date:"M d, Y"|default:"N/A" }}</p>
+                                        <span class="badge bg-info">Approved - Awaiting Disbursement</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="alert alert-info mt-3">
+                                    <i class="bi bi-info-circle"></i> No approved loans awaiting disbursement.
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Completed Loans Tab -->
+                        <div class="tab-pane fade" id="completed" role="tabpanel">
+                            {% if completed_loans %}
+                                {% for loan in completed_loans %}
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <h5>Loan #{{ loan.id }}</h5>
+                                        <p><strong>Amount:</strong> {{ loan.amount|floatformat:0|intcomma }} RWF</p>
+                                        <p><strong>Total Repaid:</strong> {{ loan.total_amount|floatformat:0|intcomma }} RWF</p>
+                                        <p><strong>Completion Date:</strong> {{ loan.completion_date|date:"M d, Y"|default:"N/A" }}</p>
+                                        <span class="badge bg-success">Completed</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="alert alert-info mt-3">
+                                    <i class="bi bi-info-circle"></i> No completed loans.
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Payment History Tab -->
+                        <div class="tab-pane fade" id="payments" role="tabpanel">
+                            {% if loan_payments %}
+                                <div class="table-responsive mt-3">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Loan</th>
+                                                <th>Amount</th>
+                                                <th>Status</th>
+                                                <th>Approved By</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for payment in loan_payments %}
+                                            <tr>
+                                                <td>{{ payment.payment_date|date:"M d, Y" }}</td>
+                                                <td>Loan #{{ payment.loan.id }}</td>
+                                                <td>{{ payment.amount|floatformat:0|intcomma }} RWF</td>
+                                                <td>
+                                                    <span class="badge bg-{% if payment.status == 'APPROVED' %}success{% elif payment.status == 'PENDING' %}warning{% else %}danger{% endif %}">
+                                                        {{ payment.get_status_display }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <!-- FIXED: Handle None approved_by -->
+                                                    {% if payment.approved_by %}
+                                                        {{ payment.approved_by.get_full_name|default:payment.approved_by.username }}
+                                                    {% else %}
+                                                        <span class="text-muted">Pending</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info mt-3">
+                                    <i class="bi bi-info-circle"></i> No payment history yet.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

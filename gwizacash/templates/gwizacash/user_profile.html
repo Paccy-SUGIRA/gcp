@@ -1,0 +1,154 @@
+{% extends 'gwizacash/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}User Profile | GwizaCash{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <!-- Profile Header with Avatar -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Your Profile</h3>
+                </div>
+                <div class="card-body text-center">
+                    <div class="row align-items-center">
+                        <div class="col-md-3">
+                            {% if request.user.userprofile.profile_picture %}
+                                <img src="{{ request.user.userprofile.profile_picture.url }}" 
+                                     alt="Profile Picture" 
+                                     class="rounded-circle img-fluid" 
+                                     style="width: 120px; height: 120px; object-fit: cover;">
+                            {% else %}
+                                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto" 
+                                     style="width: 120px; height: 120px;">
+                                    <i class="fas fa-user fa-3x text-white"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-9 text-start">
+                            <h4>{{ request.user.get_full_name|default:request.user.username }}</h4>
+                            <p class="text-muted mb-1">{{ request.user.userprofile.get_user_type_display }}</p>
+                            <p class="text-muted mb-1">Member since: {{ request.user.date_joined|date:'d M Y' }}</p>
+                            <p class="text-muted">Total Savings: {{ request.user.userprofile.total_savings|floatformat:0|intcomma }} RWF</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Profile Update Form -->
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Update Profile Information</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ user_form.first_name.id_for_label }}" class="form-label">First Name</label>
+                                {{ user_form.first_name }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ user_form.last_name.id_for_label }}" class="form-label">Last Name</label>
+                                {{ user_form.last_name }}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ user_form.email.id_for_label }}" class="form-label">Email</label>
+                                {{ user_form.email }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ profile_form.phone.id_for_label }}" class="form-label">Phone Number</label>
+                                {{ profile_form.phone }}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ profile_form.profile_picture.id_for_label }}" class="form-label">Profile Picture</label>
+                                {{ profile_form.profile_picture }}
+                                <div class="form-text">Max size: 2MB. Formats: JPG, JPEG, PNG</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Username</label>
+                                <input type="text" class="form-control" value="{{ request.user.username }}" readonly>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <!-- Read-only financial info -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Committed Shares</label>
+                                <input type="text" class="form-control" value="{{ request.user.userprofile.committed_shares }}" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Paid Shares</label>
+                                <input type="text" class="form-control" value="{{ request.user.userprofile.paid_shares }}" readonly>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" name="update_profile" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Update Profile
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Password Change Form -->
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0">Change Password</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="{{ password_form.old_password.id_for_label }}" class="form-label">Current Password</label>
+                                {{ password_form.old_password }}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ password_form.new_password1.id_for_label }}" class="form-label">New Password</label>
+                                {{ password_form.new_password1 }}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ password_form.new_password2.id_for_label }}" class="form-label">Confirm New Password</label>
+                                {{ password_form.new_password2 }}
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" name="change_password" class="btn btn-warning">
+                                <i class="fas fa-key me-1"></i> Change Password
+                            </button>
+                            <a href="{% url 'gwizacash:dashboard' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

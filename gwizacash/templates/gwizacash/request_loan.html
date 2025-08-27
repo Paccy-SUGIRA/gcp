@@ -1,0 +1,127 @@
+{% extends 'gwizacash/base.html' %}
+{% load static humanize %}
+
+{% block title %}Request Loan - GwizaCash{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Request a Loan</h3>
+                </div>
+                <div class="card-body">
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- Loan Information Alert -->
+                    <div class="alert alert-info">
+                        <h6><i class="bi bi-info-circle"></i> Loan Information</h6>
+                        <ul class="mb-0">
+                            <li>Maximum loan amount: <strong>{{ max_loan_amount|floatformat:0|intcomma }} RWF</strong> (based on your savings)</li>
+                            <li>Interest rate: <strong>5%</strong></li>
+                            <li>Available durations: <strong>3, 6, or 12 months</strong></li>
+                            <li>You can only have <strong>one active loan</strong> at a time</li>
+                        </ul>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="amount" class="form-label">Loan Amount (RWF)</label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="amount" 
+                                   name="amount" 
+                                   min="1000" 
+                                   max="{{ max_loan_amount }}"
+                                   step="1000"
+                                   required>
+                            <div class="form-text">
+                                Maximum: {{ max_loan_amount|floatformat:0|intcomma }} RWF
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="duration" class="form-label">Loan Duration</label>
+                            <select class="form-select" id="duration" name="duration" required>
+                                <option value="">Select duration</option>
+                                <option value="3">3 months</option>
+                                <option value="6">6 months</option>
+                                <option value="12">12 months</option>
+                            </select>
+                        </div>
+
+                        <!-- Loan Calculator Preview -->
+                        <div class="card bg-light mb-3" id="loanPreview" style="display: none;">
+                            <div class="card-body">
+                                <h6>Loan Preview</h6>
+                                <div class="row">
+                                    <div class="col-sm-6">
+                                        <strong>Loan Amount:</strong> <span id="previewAmount">0</span> RWF
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <strong>Interest (5%):</strong> <span id="previewInterest">0</span> RWF
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <strong>Total to Repay:</strong> <span id="previewTotal">0</span> RWF
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <strong>Monthly Payment:</strong> <span id="previewMonthly">0</span> RWF
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'gwizacash:dashboard' %}" class="btn btn-secondary me-md-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Submit Loan Request</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Loan calculator preview
+document.addEventListener('DOMContentLoaded', function() {
+    const amountInput = document.getElementById('amount');
+    const durationSelect = document.getElementById('duration');
+    const preview = document.getElementById('loanPreview');
+    
+    function updatePreview() {
+        const amount = parseFloat(amountInput.value) || 0;
+        const duration = parseInt(durationSelect.value) || 0;
+        
+        if (amount > 0 && duration > 0) {
+            const interest = amount * 0.05;
+            const total = amount + interest;
+            const monthly = total / duration;
+            
+            document.getElementById('previewAmount').textContent = amount.toLocaleString();
+            document.getElementById('previewInterest').textContent = interest.toLocaleString();
+            document.getElementById('previewTotal').textContent = total.toLocaleString();
+            document.getElementById('previewMonthly').textContent = monthly.toLocaleString();
+            
+            preview.style.display = 'block';
+        } else {
+            preview.style.display = 'none';
+        }
+    }
+    
+    amountInput.addEventListener('input', updatePreview);
+    durationSelect.addEventListener('change', updatePreview);
+});
+</script>
+{% endblock %}

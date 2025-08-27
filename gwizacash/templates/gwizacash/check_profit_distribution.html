@@ -1,0 +1,22 @@
+<h2>Profit Distribution Status</h2>
+
+{% if last_distribution %}
+  <p><strong>Last Distribution:</strong> {{ last_distribution|date:"F j, Y, H:i" }}</p>
+  <p><strong>Total Distributed:</strong> {{ last_summary.total_distributed|floatformat:2 }} RWF</p>
+  <p><strong>Shares Distributed:</strong> {{ last_summary.total_shares }}</p>
+  <p><strong>Per Share Rate:</strong> {{ last_summary.per_share|floatformat:2 }} RWF</p>
+{% else %}
+  <p>No profit distributions have been made yet.</p>
+{% endif %}
+
+<hr>
+
+<h3>Next Potential Distribution</h3>
+<p><strong>Estimated Amount:</strong> {{ estimated_total|floatformat:2 }} RWF</p>
+<p><strong>Per Share Estimate:</strong> {{ estimated_per_share|floatformat:2 }} RWF</p>
+
+{% if next_distribution_date %}
+  <p><strong>Projected Next Date:</strong> {{ next_distribution_date|date:"F j, Y" }}</p>
+{% else %}
+  <p>The first distribution hasn't happened yet, so no estimate for next date.</p>
+{% endif %}

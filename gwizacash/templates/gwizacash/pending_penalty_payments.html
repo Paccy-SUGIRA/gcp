@@ -1,0 +1,48 @@
+{% extends 'gwizacash/base.html' %}
+
+{% load humanize %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-warning text-dark">
+            <h4 class="mb-0">Pending Penalty Payments</h4>
+        </div>
+        <div class="card-body">
+            {% if page_obj %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Penalty Amount</th>
+                                <th>Payment Amount</th>
+                                <th>Bank Slip</th>
+                                <th>Submitted</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in page_obj %}
+                            <tr>
+                                <td>{{ payment.penalty.user.get_full_name|default:payment.penalty.user.username }}</td>
+                                <td>{{ payment.penalty.amount|floatformat:2|intcomma }} RWF</td>
+                                <td>{{ payment.amount|floatformat:2|intcomma }} RWF</td>
+                                <td><a href="{{ payment.bank_slip.url }}" target="_blank" class="btn btn-sm btn-info">View</a></td>
+                                <td>{{ payment.payment_date|date:"d M Y" }}</td>
+                                <td>
+                                    <a href="{% url 'gwizacash:approve_penalty_payment' payment.id %}" class="btn btn-sm btn-primary">Review</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% include 'gwizacash/pagination.html' %}
+            {% else %}
+                <p>No pending penalty payments.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

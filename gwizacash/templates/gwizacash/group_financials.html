@@ -1,0 +1,248 @@
+{% extends 'gwizacash/base.html' %}
+{% load static %}
+
+{% block title %}Group Financials{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">Group Financial Overview</h2>
+            
+            <!-- Collective Fund Summary Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Group Wealth</h5>
+                            <h3>{{ total_group_wealth|floatformat:0 }} RWF</h3>
+                            <small>All deposits + profits earned</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Available Cash</h5>
+                            <h3>{{ available_cash|floatformat:0 }} RWF</h3>
+                            <small>Ready for new loans</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Outstanding Loans</h5>
+                            <h3>{{ outstanding_loans|floatformat:0 }} RWF</h3>
+                            <small>Money currently loaned out</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Available Profit</h5>
+                            <h3>{{ available_profit|floatformat:0 }} RWF</h3>
+                            <small>Ready for distribution</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profit Summary Row -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Total Profit Earned</h5>
+                            <h4 class="text-success">{{ total_profit_earned|floatformat:0 }} RWF</h4>
+                            <small class="text-muted">From interest + penalties</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Total Distributed</h5>
+                            <h4 class="text-primary">{{ total_profit_distributed|floatformat:0 }} RWF</h4>
+                            <small class="text-muted">Given to members</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Distribution Rate</h5>
+                            <h4 class="text-info">
+                                {% if collective_fund.total_profit_earned > 0 %}
+                                    {{ distribution_percentage|floatformat:1 }}%
+                                {% else %}
+                                    0%
+                                {% endif %}
+                            </h4>
+                            <small class="text-muted">Of total profits</small>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+
+            <!-- Distribution History -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Recent Profit Distributions</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if recent_distributions %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Member</th>
+                                                <th>Amount</th>
+                                                <th>Shares</th>
+                                                <th>Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for dist in recent_distributions %}
+                                            <tr>
+                                                <td>{{ dist.user.get_full_name|default:dist.user.username }}</td>
+                                                <td>{{ dist.total_amount|floatformat:0 }} RWF</td>
+                                                <td>{{ dist.shares_distributed }}</td>
+                                                <td>{{ dist.distribution_date|date:"M d, Y" }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted">No profit distributions yet.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Monthly Distribution Summaries</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if distribution_summaries %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Month</th>
+                                                <th>Total Distributed</th>
+                                                <th>Source</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for summary in distribution_summaries %}
+                                            <tr>
+                                                <td>{{ summary.distribution_date|date:"M Y" }}</td>
+                                                <td>{{ summary.total_distributed|floatformat:0 }} RWF</td>
+                                                <td>
+                                                    <small class="badge badge-info">{{ summary.source }}</small>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted">No distribution summaries yet.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Existing content (loans, etc.) -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Active Loans</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if page_obj %}
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Member</th>
+                                                <th>Amount</th>
+                                                <th>Interest</th>
+                                                <th>Status</th>
+                                                <th>Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for loan in page_obj %}
+                                            <tr>
+                                                <td>{{ loan.user.get_full_name|default:loan.user.username }}</td>
+                                                <td>{{ loan.amount|floatformat:0 }} RWF</td>
+                                                <td>{{ loan.interest_amount|floatformat:0 }} RWF</td>
+                                                <td>
+                                                    <span class="badge badge-{% if loan.status == 'ACTIVE' %}success{% elif loan.status == 'APPROVED' %}warning{% else %}secondary{% endif %}">
+                                                        {{ loan.status }}
+                                                    </span>
+                                                </td>
+                                                <td>{{ loan.created_at|date:"M d, Y" }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <!-- Pagination -->
+                                {% if page_obj.has_other_pages %}
+                                <nav>
+                                    <ul class="pagination justify-content-center">
+                                        {% if page_obj.has_previous %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                                            </li>
+                                        {% endif %}
+                                        
+                                        {% for num in page_obj.paginator.page_range %}
+                                            {% if page_obj.number == num %}
+                                                <li class="page-item active">
+                                                    <span class="page-link">{{ num }}</span>
+                                                </li>
+                                            {% else %}
+                                                <li class="page-item">
+                                                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                                </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                        
+                                        {% if page_obj.has_next %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                                            </li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                                {% endif %}
+                            {% else %}
+                                <p class="text-muted">No active loans.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

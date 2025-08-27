@@ -1,0 +1,44 @@
+{% extends 'gwizacash/base.html' %}
+
+{% block title %}Make Deposit - Gwiza Cash{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Make Deposit</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <p><strong>Share Information:</strong></p>
+                    <p>Each share costs 20,000 RWF</p>
+                    <p>Your committed shares: {{ user.userprofile.committed_shares }}</p>
+                    <p>Paid shares: {{ user.userprofile.paid_shares }}</p>
+                    <p>Remaining shares to pay: {{ remaining_shares }}</p>
+                </div>
+                
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Amount (RWF)</label>
+                        <input type="number" class="form-control" id="amount" name="amount" min="20000" step="20000" required>
+                        <div class="form-text">Amount must be a multiple of 20,000 RWF (one share)</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="bank_slip" class="form-label">Bank Slip (Image/PDF)</label>
+                        <input type="file" class="form-control" id="bank_slip" name="bank_slip" accept="image/*,.pdf" required>
+                        <div class="form-text">Upload a scanned copy or photo of your bank deposit slip</div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Submit Deposit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

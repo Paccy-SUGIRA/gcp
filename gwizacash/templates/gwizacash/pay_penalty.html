@@ -1,0 +1,26 @@
+{% extends 'gwizacash/base.html' %}
+{% load humanize %}
+{% block title %}Pay Penalty | GwizaCash{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="card shadow-lg">
+        <div class="card-header bg-danger text-white">
+            <h4 class="mb-0">Pay Penalty</h4>
+        </div>
+        <div class="card-body">
+            <p><strong>Penalty:</strong> {{ penalty.amount|floatformat:2|intcomma }} RWF ({{ penalty.get_penalty_type_display }})</p>
+            <p><strong>Due Date:</strong> {{ penalty.original_due_date|date:"d M Y" }}</p>
+            <p><strong>Days Late:</strong> {{ penalty.days_late }}</p>
+            <p><strong>Description:</strong> {{ penalty.description|default:"No description provided" }}</p>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="submit" class="btn btn-primary">Submit Payment</button>
+                    <a href="{% url 'gwizacash:dashboard' %}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

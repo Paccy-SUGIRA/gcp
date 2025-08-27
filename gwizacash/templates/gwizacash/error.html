@@ -1,0 +1,13 @@
+{% extends 'gwizacash/base.html' %}
+
+{% block title %}{{ title }} | GwizaCash{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="alert alert-danger">
+        <h4>{{ title }}</h4>
+        <p>{{ message }}</p>
+        <a href="{% url 'gwizacash:dashboard' %}" class="btn btn-primary">Back to Dashboard</a>
+    </div>
+</div>
+{% endblock %}

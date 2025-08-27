@@ -1,0 +1,37 @@
+/* Modern Layout System
+:root {
+    --primary: #2563eb;
+    --secondary: #3b82f6;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --dark: #1f2937;
+    --light: #f3f4f6;
+}
+
+/* Layout & Navigation */
+/* .app-container {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    min-height: 100vh;
+}
+
+.sidebar {
+    background: var(--dark);
+    color: white;
+    padding: 1.5rem;
+} */
+/* 
+.main-content {
+    background: var(--light);
+    padding: 2rem;
+}
+
+/* Component Styling */
+.card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+} */ */

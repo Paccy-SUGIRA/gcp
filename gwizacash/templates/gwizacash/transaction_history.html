@@ -1,0 +1,306 @@
+{% extends 'gwizacash/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Transaction History | GwizaCash{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">
+                    <i class="fas fa-history me-2"></i>Transaction History
+                </h2>
+                <a href="{% url 'gwizacash:dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Summary Section -->
+    {% if share_summary %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Share Status Summary</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2 mb-3">
+                            <div class="card h-100 border-info">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-muted">Committed</h5>
+                                    <h3 class="text-info">{{ share_summary.committed }}</h3>
+                                    <small class="text-muted">shares</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <div class="card h-100 border-success">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-muted">Paid</h5>
+                                    <h3 class="text-success">{{ share_summary.paid }}</h3>
+                                    <small class="text-muted">shares</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <div class="card h-100 border-warning">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-muted">Remaining</h5>
+                                    <h3 class="text-warning">{{ share_summary.remaining }}</h3>
+                                    <small class="text-muted">shares</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <div class="card h-100 border-primary">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-muted">Total Value</h5>
+                                    <h3 class="text-primary">{{ share_summary.total_value|floatformat:0|intcomma }}</h3>
+                                    <small class="text-muted">RWF</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <div class="card h-100 border-success">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-muted">Paid Value</h5>
+                                    <h3 class="text-success">{{ share_summary.paid_value|floatformat:0|intcomma }}</h3>
+                                    <small class="text-muted">RWF</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <div class="card h-100 border-danger">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-muted">Balance Due</h5>
+                                    <h3 class="text-danger">{{ share_summary.remaining_value|floatformat:0|intcomma }}</h3>
+                                    <small class="text-muted">RWF</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Transactions Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">All Transactions</h4>
+                    <span class="badge bg-light text-dark">
+                        {% if request.user.userprofile.user_type == 'COORDINATOR' %}
+                            All Members
+                        {% else %}
+                            {{ request.user.get_full_name|default:request.user.username }}
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="card-body">
+                    {% if transactions %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>User</th>
+                                        <th>Type</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Reference</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for transaction in transactions %}
+                                    <tr>
+                                        <td>
+                                            <small class="text-muted">{{ transaction.date|date:"M d, Y" }}</small><br>
+                                            <small class="text-muted">{{ transaction.date|date:"H:i" }}</small>
+                                        </td>
+                                        <td>
+                                            {% if request.user.userprofile.user_type == 'COORDINATOR' %}
+                                                <strong>{{ transaction.user.get_full_name|default:transaction.user.username }}</strong><br>
+                                                <small class="text-muted">{{ transaction.user.username }}</small>
+                                            {% else %}
+                                                <span class="text-muted">You</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if transaction.transaction_type == 'DEPOSIT' %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-arrow-down me-1"></i>{{ transaction.get_transaction_type_display }}
+                                                </span>
+                                            {% elif transaction.transaction_type == 'LOAN_REQUEST' %}
+                                                <span class="badge bg-warning text-dark">
+                                                    <i class="fas fa-hand-holding-usd me-1"></i>{{ transaction.get_transaction_type_display }}
+                                                </span>
+                                            {% elif transaction.transaction_type == 'LOAN_DISBURSEMENT' %}
+                                                <span class="badge bg-info">
+                                                    <i class="fas fa-money-bill-wave me-1"></i>{{ transaction.get_transaction_type_display }}
+                                                </span>
+                                            {% elif transaction.transaction_type == 'LOAN_PAYMENT' %}
+                                                <span class="badge bg-primary">
+                                                    <i class="fas fa-credit-card me-1"></i>{{ transaction.get_transaction_type_display }}
+                                                </span>
+                                            {% elif transaction.transaction_type == 'PROFIT_DISTRIBUTION' %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-gift me-1"></i>{{ transaction.get_transaction_type_display }}
+                                                </span>
+                                            {% elif transaction.transaction_type == 'PENALTY' %}
+                                                <span class="badge bg-danger">
+                                                    <i class="fas fa-exclamation-triangle me-1"></i>{{ transaction.get_transaction_type_display }}
+                                                </span>
+                                            {% elif transaction.transaction_type == 'PENALTY_PAYMENT' %}
+                                                <span class="badge bg-warning text-dark">
+                                                    <i class="fas fa-receipt me-1"></i>{{ transaction.get_transaction_type_display }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ transaction.get_transaction_type_display }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <strong class="
+                                                {% if transaction.transaction_type == 'DEPOSIT' or transaction.transaction_type == 'PROFIT_DISTRIBUTION' %}
+                                                    text-success
+                                                {% elif transaction.transaction_type == 'PENALTY' or transaction.transaction_type == 'LOAN_DISBURSEMENT' %}
+                                                    text-danger
+                                                {% else %}
+                                                    text-primary
+                                                {% endif %}
+                                            ">
+                                                {{ transaction.amount|floatformat:0|intcomma }} RWF
+                                            </strong>
+                                        </td>
+                                        <td>
+                                            {% if transaction.status == 'PENDING' %}
+                                                <span class="badge bg-warning text-dark">
+                                                    <i class="fas fa-clock me-1"></i>Pending
+                                                </span>
+                                            {% elif transaction.status == 'COMPLETED' %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check me-1"></i>Completed
+                                                </span>
+                                            {% elif transaction.status == 'REJECTED' %}
+                                                <span class="badge bg-danger">
+                                                    <i class="fas fa-times me-1"></i>Rejected
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ transaction.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if transaction.reference_id %}
+                                                <code class="text-muted">{{ transaction.reference_id }}</code>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if transaction.description %}
+                                                <small class="text-muted">{{ transaction.description|truncatechars:50 }}</small>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if is_paginated %}
+                        <nav aria-label="Transaction pagination">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1">First</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                                    </li>
+                                {% endif %}
+
+                                <li class="page-item active">
+                                    <span class="page-link">
+                                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                                    </span>
+                                </li>
+
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">No Transactions Found</h4>
+                            <p class="text-muted">You haven't made any transactions yet.</p>
+                            <div class="mt-4">
+                                <a href="{% url 'gwizacash:create_deposit' %}" class="btn btn-success me-2">
+                                    <i class="fas fa-plus-circle me-1"></i>Make Your First Deposit
+                                </a>
+                                <a href="{% url 'gwizacash:dashboard' %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-home me-1"></i>Go to Dashboard
+                                </a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Summary Statistics -->
+{% if transactions %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-secondary text-white">
+                <h4 class="mb-0">Transaction Summary</h4>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <h5 class="text-muted">Total Transactions</h5>
+                        <h3 class="text-primary">{{ page_obj.paginator.count }}</h3>
+                    </div>
+                    <div class="col-md-3">
+                        <h5 class="text-muted">This Page</h5>
+                        <h3 class="text-info">{{ page_obj.object_list|length }}</h3>
+                    </div>
+                    <div class="col-md-3">
+                        <h5 class="text-muted">Completed</h5>
+                        <h3 class="text-success">{{ completed_count }}</h3>
+                    </div>
+                    <div class="col-md-3">
+                        <h5 class="text-muted">Pending</h5>
+                        <h3 class="text-warning">{{ pending_count }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+</div>
+{% endblock %}

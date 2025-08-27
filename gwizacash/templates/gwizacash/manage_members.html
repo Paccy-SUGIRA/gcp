@@ -1,0 +1,552 @@
+{% extends 'gwizacash/base.html' %}
+{% load humanize %}
+{% block title %}Manage Members{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Manage Members</h1>
+        <a href="{% url 'gwizacash:create_member' %}" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i> Add New Member
+        </a>
+    </div>
+
+    <!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card bg-light h-100">
+            <div class="card-body">
+                <h5 class="card-title">Users</h5>
+                <div class="d-flex align-items-center">
+                    <div class="display-4 me-3">{{ total_members }}</div>
+                    <div class="text-muted">
+                        Total users under your management
+                        <br>
+                        <small class="d-block mt-1">
+                            <span class="badge bg-info me-1">{{ members_count }} Members</span>
+                            <span class="badge bg-warning">{{ coordinators_count }} Coordinators</span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card bg-light h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Shares</h5>
+                    <div class="d-flex flex-column">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Committed:</span>
+                            <span class="fw-bold">{{ total_committed_shares }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Paid:</span>
+                            <span class="fw-bold">{{ total_paid_shares }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Completion:</span>
+                            <span class="fw-bold">
+                                {% if total_committed_shares > 0 %}
+                                    {{ total_paid_shares|floatformat:0 }}%
+                                {% else %}
+                                    0%
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card bg-light h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Financial Summary</h5>
+                    <div class="d-flex flex-column">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Total Commitment:</span>
+                            <span class="fw-bold">{{ total_commitment_amount|floatformat:0|intcomma }} RWF</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Remaining Balance:</span>
+                            <span class="fw-bold">{{ total_remaining_balance|floatformat:0|intcomma }} RWF</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" class="form-control" id="search" name="search" placeholder="Name, email or phone" value="{{ request.GET.search }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">All</option>
+                        <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="sort" class="form-label">Sort By</label>
+                    <select class="form-select" id="sort" name="sort">
+                        <option value="name" {% if request.GET.sort == 'name' %}selected{% endif %}>Name</option>
+                        <option value="shares" {% if request.GET.sort == 'shares' %}selected{% endif %}>Shares</option>
+                        <option value="balance" {% if request.GET.sort == 'balance' %}selected{% endif %}>Balance</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Members Table -->
+    <div class="card">
+        <div class="card-body">
+            {% if members %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Name</th>
+                                <th>Contact</th>
+                                <th>Shares</th>
+                                <th>Financial</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for member in members %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle bg-primary text-white me-2">
+                                            {{ member.user.first_name|first }}{{ member.user.last_name|first }}
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">{{ member.user.first_name }} {{ member.user.last_name }}</div>
+                                            <small class="text-muted">{{ member.user.username }}</small>
+                                            <br><span class="badge bg-{% if member.user_type == 'COORDINATOR' %}warning{% else %}info{% endif %} badge-sm">
+                                                {{ member.get_user_type_display }}
+                                            </span>
+                                        </div>
+                                        
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if member.phone %}
+                                        <div><i class="bi bi-telephone me-1"></i> {{ member.phone }}</div>
+                                    {% endif %}
+                                    {% if member.user.email %}
+                                        <div><i class="bi bi-envelope me-1"></i> {{ member.user.email }}</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <div class="d-flex justify-content-between">
+                                            <span>Committed:</span>
+                                            <span class="fw-bold">{{ member.committed_shares }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Paid:</span>
+                                            <span class="fw-bold">{{ member.paid_shares }}</span>
+                                        </div>
+                                        <div class="progress mt-1" style="height: 6px;">
+                                            {% if member.committed_shares > 0 %}
+                                                {% with percentage=member.paid_shares|floatformat:0 %}
+                                                <div class="progress-bar bg-success" role="progressbar" 
+                                                    style="width: {{ percentage }}%" 
+                                                    aria-valuenow="{{ percentage }}" 
+                                                    aria-valuemin="0" 
+                                                    aria-valuemax="100"></div>
+                                                {% endwith %}
+                                            {% else %}
+                                                <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <div class="d-flex justify-content-between">
+                                            <span>Total:</span>
+                                            <span class="fw-bold">{{ member.total_commitment|floatformat:0|intcomma }} RWF</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Remaining:</span>
+                                            <span class="fw-bold">{{ member.remaining_share_balance|floatformat:0|intcomma }} RWF</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Savings:</span>
+                                            <span class="fw-bold">{{ member.total_savings|floatformat:0|intcomma }} RWF</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if member.user.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton{{ member.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Actions
+                                        </button>
+                                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton{{ member.id }}">
+                                            <li><a class="dropdown-item" href="{% url 'gwizacash:edit_member' member.user.id %}">
+                                                <i class="bi bi-pencil me-2"></i> Edit
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#viewMemberModal{{ member.id }}">
+                                                <i class="bi bi-eye me-2"></i> View Details
+                                            </a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <form method="post" action="{% url 'gwizacash:toggle_member_status' member.user.id %}" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="dropdown-item">
+                                                        {% if member.user.is_active %}
+                                                            <i class="bi bi-person-x me-2"></i> Deactivate
+                                                        {% else %}
+                                                            <i class="bi bi-person-check me-2"></i> Activate
+                                                        {% endif %}
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <!-- Member Details Modal -->
+                                    <div class="modal fade" id="viewMemberModal{{ member.id }}" tabindex="-1" aria-labelledby="viewMemberModalLabel{{ member.id }}" aria-hidden="true">
+                                        <div class="modal-dialog modal-lg">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="viewMemberModalLabel{{ member.id }}">Member Details</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <h6 class="mb-3">Personal Information</h6>
+                                                            <table class="table table-sm">
+                                                                <tr>
+                                                                    <th>Full Name</th>
+                                                                    <td>{{ member.user.first_name }} {{ member.user.last_name }}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>Username</th>
+                                                                    <td>{{ member.user.username }}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>Email</th>
+                                                                    <td>{{ member.user.email|default:"Not provided" }}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>Phone</th>
+                                                                    <td>{{ member.phone|default:"Not provided" }}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>Status</th>
+                                                                    <td>
+                                                                        {% if member.user.is_active %}
+                                                                            <span class="badge bg-success">Active</span>
+                                                                        {% else %}
+                                                                            <span class="badge bg-danger">Inactive</span>
+                                                                        {% endif %}
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>First Login</th>
+                                                                    <td>
+                                                                        {% if member.first_login %}
+                                                                            <span class="badge bg-warning">Pending</span>
+                                                                        {% else %}
+                                                                            <span class="badge bg-success">Completed</span>
+                                                                        {% endif %}
+                                                                    </td>
+                                                                </tr>
+                                                            </table>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <h6 class="mb-3">Financial Information</h6>
+                                                            <table class="table table-sm">
+                                                                <tr>
+                                                                    <th>Committed Shares</th>
+                                                                    <td>{{ member.committed_shares }}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>Paid Shares</th>
+                                                                    <td>{{ member.paid_shares }}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>Share Value</th>
+                                                                    <td>{{ member.share_value|floatformat:0|intcomma }} RWF</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>Total Commitment</th>
+                                                                    <td>{{ member.total_commitment|floatformat:0|intcomma }} RWF</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>Remaining Balance</th>
+                                                                    <td>{{ member.remaining_share_balance|floatformat:0|intcomma }} RWF</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <tr>
+                                                                        <th>Total Savings</th>
+                                                                        <td>{{ member.total_savings|floatformat:0|intcomma }} RWF</td>
+                                                                    </tr>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <!-- Additional member information tabs -->
+                                                        <ul class="nav nav-tabs mt-4" id="memberDetailTabs{{ member.id }}" role="tablist">
+                                                            <li class="nav-item" role="presentation">
+                                                                <button class="nav-link active" id="deposits-tab{{ member.id }}" data-bs-toggle="tab" 
+                                                                    data-bs-target="#deposits{{ member.id }}" type="button" role="tab" 
+                                                                    aria-controls="deposits{{ member.id }}" aria-selected="true">
+                                                                    Deposits
+                                                                </button>
+                                                            </li>
+                                                            <li class="nav-item" role="presentation">
+                                                                <button class="nav-link" id="loans-tab{{ member.id }}" data-bs-toggle="tab" 
+                                                                    data-bs-target="#loans{{ member.id }}" type="button" role="tab" 
+                                                                    aria-controls="loans{{ member.id }}" aria-selected="false">
+                                                                    Loans
+                                                                </button>
+                                                            </li>
+                                                            <li class="nav-item" role="presentation">
+                                                                <button class="nav-link" id="penalties-tab{{ member.id }}" data-bs-toggle="tab" 
+                                                                    data-bs-target="#penalties{{ member.id }}" type="button" role="tab" 
+                                                                    aria-controls="penalties{{ member.id }}" aria-selected="false">
+                                                                    Penalties
+                                                                </button>
+                                                            </li>
+                                                        </ul>
+                                                        
+                                                        <div class="tab-content p-3 border border-top-0 rounded-bottom" id="memberDetailTabsContent{{ member.id }}">
+                                                            <!-- Deposits Tab -->
+                                                            <div class="tab-pane fade show active" id="deposits{{ member.id }}" role="tabpanel" 
+                                                                aria-labelledby="deposits-tab{{ member.id }}">
+                                                                <p class="text-muted">Recent deposits by this member</p>
+                                                                <div class="table-responsive">
+                                                                    <table class="table table-sm">
+                                                                        <thead>
+                                                                            <tr>
+                                                                                <th>Date</th>
+                                                                                <th>Amount</th>
+                                                                                <th>Status</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            {% for deposit in member.user.deposit_set.all|slice:":5" %}
+                                                                            <tr>
+                                                                                <td>{{ deposit.date|date:"d M Y" }}</td>
+                                                                                <td>{{ deposit.amount|floatformat:0|intcomma }} RWF</td>
+                                                                                <td>
+                                                                                    {% if deposit.status == 'PENDING' %}
+                                                                                        <span class="badge bg-warning">Pending</span>
+                                                                                    {% elif deposit.status == 'APPROVED' %}
+                                                                                        <span class="badge bg-success">Approved</span>
+                                                                                    {% else %}
+                                                                                        <span class="badge bg-danger">Rejected</span>
+                                                                                    {% endif %}
+                                                                                </td>
+                                                                            </tr>
+                                                                            {% empty %}
+                                                                            <tr>
+                                                                                <td colspan="3" class="text-center">No deposits found</td>
+                                                                            </tr>
+                                                                            {% endfor %}
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <!-- Loans Tab -->
+                                                            <div class="tab-pane fade" id="loans{{ member.id }}" role="tabpanel" 
+                                                                aria-labelledby="loans-tab{{ member.id }}">
+                                                                <p class="text-muted">Loan history for this member</p>
+                                                                <div class="table-responsive">
+                                                                    <table class="table table-sm">
+                                                                        <thead>
+                                                                            <tr>
+                                                                                <th>Request Date</th>
+                                                                                <th>Amount</th>
+                                                                                <th>Status</th>
+                                                                                <th>Remaining</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            {% for loan in member.user.loan_set.all|slice:":5" %}
+                                                                            <tr>
+                                                                                <td>{{ loan.request_date|date:"d M Y" }}</td>
+                                                                                <td>{{ loan.amount|floatformat:0|intcomma }} RWF</td>
+                                                                                <td>
+                                                                                    {% if loan.status == 'REQUESTED' %}
+                                                                                        <span class="badge bg-warning">Requested</span>
+                                                                                    {% elif loan.status == 'APPROVED' %}
+                                                                                        <span class="badge bg-primary">Approved</span>
+                                                                                    {% elif loan.status == 'DISBURSED' %}
+                                                                                        <span class="badge bg-info">Disbursed</span>
+                                                                                    {% elif loan.status == 'ACTIVE' %}
+                                                                                        <span class="badge bg-primary">Active</span>
+                                                                                    {% elif loan.status == 'PAID' %}
+                                                                                        <span class="badge bg-success">Paid</span>
+                                                                                    {% else %}
+                                                                                        <span class="badge bg-danger">Rejected</span>
+                                                                                    {% endif %}
+                                                                                </td>
+                                                                                <td>
+                                                                                    {% if loan.remaining_balance %}
+                                                                                        {{ loan.remaining_balance|floatformat:0|intcomma }} RWF
+                                                                                    {% else %}
+                                                                                        -
+                                                                                    {% endif %}
+                                                                                </td>
+                                                                            </tr>
+                                                                            {% empty %}
+                                                                            <tr>
+                                                                                <td colspan="4" class="text-center">No loans found</td>
+                                                                            </tr>
+                                                                            {% endfor %}
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <!-- Penalties Tab -->
+                                                            <div class="tab-pane fade" id="penalties{{ member.id }}" role="tabpanel" 
+                                                                aria-labelledby="penalties-tab{{ member.id }}">
+                                                                <p class="text-muted">Penalties for this member</p>
+                                                                <div class="table-responsive">
+                                                                    <table class="table table-sm">
+                                                                        <thead>
+                                                                            <tr>
+                                                                                <th>Date</th>
+                                                                                <th>Type</th>
+                                                                                <th>Amount</th>
+                                                                                <th>Status</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            {% for penalty in member.user.penalty_set.all|slice:":5" %}
+                                                                            <tr>
+                                                                                <td>{{ penalty.date|date:"d M Y" }}</td>
+                                                                                <td>{{ penalty.get_penalty_type_display }}</td>
+                                                                                <td>{{ penalty.amount|floatformat:0|intcomma }} RWF</td>
+                                                                                <td>
+                                                                                    {% if penalty.is_paid %}
+                                                                                        <span class="badge bg-success">Paid</span>
+                                                                                    {% else %}
+                                                                                        <span class="badge bg-danger">Unpaid</span>
+                                                                                    {% endif %}
+                                                                                </td>
+                                                                            </tr>
+                                                                            {% empty %}
+                                                                            <tr>
+                                                                                <td colspan="4" class="text-center">No penalties found</td>
+                                                                            </tr>
+                                                                            {% endfor %}
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <a href="{% url 'gwizacash:edit_member' member.user.id %}" class="btn btn-primary">
+                                                            <i class="bi bi-pencil"></i> Edit Member
+                                                        </a>
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <div class="mb-3">
+                            <i class="bi bi-people fs-1 text-muted"></i>
+                        </div>
+                        <h5>No members found</h5>
+                        <p class="text-muted">You don't have any members assigned to you yet.</p>
+                        <a href="{% url 'gwizacash:create_member' %}" class="btn btn-primary">
+                            <i class="bi bi-person-plus"></i> Add New Member
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    
+        <!-- Pagination -->
+        {% if members.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if members.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ members.previous_page_number }}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link" aria-hidden="true">&laquo;</span>
+                    </li>
+                {% endif %}
+                
+                {% for i in members.paginator.page_range %}
+                    {% if members.number == i %}
+                        <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                    {% else %}
+                        <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if members.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ members.next_page_number }}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link" aria-hidden="true">&raquo;</span>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+    
+    <!-- CSS for avatar circles -->
+    <style>
+        .avatar-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+    </style>
+    {% endblock %}
+    

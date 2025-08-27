@@ -1,0 +1,90 @@
+{% extends 'gwizacash/base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2>Pending Deposits</h2>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5>Summary</h5>
+            <p>Total Pending Deposits: <strong>{{ page_obj.paginator.count }}</strong></p>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Member</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                            <th>Bank Slip</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for deposit in page_obj %}
+                        <tr>
+                            <td>{{ deposit.user.get_full_name|default:deposit.user.username }}</td>
+                            <td>{{ deposit.amount|floatformat:2 }} RWF</td>
+                            <td>{{ deposit.date|date:"M d, Y H:i" }}</td>
+                            <td>
+                                {% if deposit.bank_slip %}
+                                    <a href="{{ deposit.bank_slip.url }}" target="_blank" class="btn btn-sm btn-outline-primary">View Slip</a>
+                                {% else %}
+                                    <span class="text-muted">No slip</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form method="POST" action="{% url 'gwizacash:approve_deposit' deposit.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                                </form>
+                                <button type="button" class="btn btn-sm btn-danger ms-1" data-bs-toggle="modal" data-bs-target="#rejectModal{{ deposit.id }}">
+                                    Reject
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">No pending deposits</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Modals -->
+{% for deposit in page_obj %}
+<div class="modal fade" id="rejectModal{{ deposit.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Reject Deposit</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{% url 'gwizacash:reject_deposit' deposit.id %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <p>Are you sure you want to reject this deposit of <strong>{{ deposit.amount|floatformat:2 }} RWF</strong> from <strong>{{ deposit.user.get_full_name|default:deposit.user.username }}</strong>?</p>
+                    <div class="mb-3">
+                        <label for="rejection_reason{{ deposit.id }}" class="form-label">Rejection Reason:</label>
+                        <textarea class="form-control" id="rejection_reason{{ deposit.id }}" name="rejection_reason" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Reject Deposit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}
