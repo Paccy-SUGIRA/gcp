@@ -14,7 +14,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-2aa@7o-71#jb)+k36pt*8
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['<your-app>.onrender.com', '127.0.0.1']  # Replace <your-app> with your Render app name (e.g., gwizacash)
+ALLOWED_HOSTS = ['gwiza-cash.onrender.com', '127.0.0.1']  # Replace <your-app> with your Render app name (e.g., gwizacash)
 
 # Application definition
 INSTALLED_APPS = [
