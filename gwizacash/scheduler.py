@@ -4,7 +4,6 @@ from apscheduler.triggers.cron import CronTrigger
 from django.conf import settings
 from django.core.management import call_command
 from django.utils import timezone
-from django_apscheduler.jobstores import DjangoJobStore
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +39,9 @@ def start_scheduler():
     if _scheduler is not None:
         logger.info("Scheduler already running, skipping start.")
         return
+
+    # Import DjangoJobStore here to avoid early database access
+    from django_apscheduler.jobstores import DjangoJobStore
 
     _scheduler = BackgroundScheduler(timezone="Africa/Kigali")
     _scheduler.add_jobstore(DjangoJobStore(), "default")
