@@ -4,7 +4,6 @@ from apscheduler.triggers.cron import CronTrigger
 from django.conf import settings
 from django.core.management import call_command
 from django.utils import timezone
-# Import DjangoJobStore lazily to avoid early settings access
 from django_apscheduler.jobstores import DjangoJobStore
 
 logger = logging.getLogger(__name__)
