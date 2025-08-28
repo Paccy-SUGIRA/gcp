@@ -1,6 +1,3 @@
-# /home/kench/Dev/gwiza-cash/gwizacash/scheduler.
-
-
 import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -37,12 +34,12 @@ def start_scheduler():
         logger.info("Scheduler not started in DEBUG mode.")
         return
 
-    scheduler = BackgroundScheduler()
+    scheduler = BackgroundScheduler(timezone="Africa/Kigali")  # Set timezone
 
     # Reset monthly shares on 1st of each month at 02:00 AM
     scheduler.add_job(
         reset_monthly_shares,
-        trigger=CronTrigger(day=1, hour=2, minute=0),
+        trigger=CronTrigger(day=1, hour=2, minute=0, timezone="Africa/Kigali"),
         id="reset_monthly_shares",
         max_instances=1,
         replace_existing=True,
@@ -51,16 +48,16 @@ def start_scheduler():
     # Distribute monthly profits on 2nd of each month at 03:00 AM
     scheduler.add_job(
         distribute_monthly_profits,
-        trigger=CronTrigger(day=2, hour=3, minute=0),
+        trigger=CronTrigger(day=2, hour=3, minute=0, timezone="Africa/Kigali"),
         id="distribute_monthly_profits",
         max_instances=1,
         replace_existing=True,
     )
 
-    # Calculate penalties **every day at 00:10 AM**
+    # Calculate penalties every day at 00:10 AM
     scheduler.add_job(
         calculate_penalties,
-        trigger=CronTrigger(hour=0, minute=10),
+        trigger=CronTrigger(hour=0, minute=10, timezone="Africa/Kigali"),
         id="calculate_penalties_daily",
         max_instances=1,
         replace_existing=True,
