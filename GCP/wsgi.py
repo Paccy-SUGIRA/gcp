@@ -1,19 +1,9 @@
-"""
-WSGI config for GCP project.
-
-It exposes the WSGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/4.2/howto/deployment/wsgi/
-"""
-
 import os
-
 from django.core.wsgi import get_wsgi_application
-from gwizacash.scheduler import start_scheduler
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'GCP.settings')
-
-
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "GCP.settings")
 application = get_wsgi_application()
-start_scheduler()  # Start the scheduler
+
+# Start scheduler after Django is configured
+from gwizacash.scheduler import start_scheduler
+start_scheduler()
