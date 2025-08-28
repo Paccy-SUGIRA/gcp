@@ -18,7 +18,7 @@
                         {% endfor %}
                     {% endif %}
                     
-                    <form method="post" action="{% url 'gwizacash:register' %}">
+                    <form method="post" action="{% url 'gwizacash:login' %}">
                         {% csrf_token %}
                         
                         {% for field in form %}
